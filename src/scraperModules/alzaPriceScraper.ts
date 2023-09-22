@@ -1,5 +1,6 @@
 import { Page } from "puppeteer";
 import { ScrapedDataObject } from "../types";
+import { getElementData } from "../helpers";
 
 class AlzaPriceScraper {
     constructor() {
@@ -42,17 +43,6 @@ class AlzaPriceScraper {
         await page.screenshot({path: 'iframe.png'});
     }
 
-    async getElementData(page: Page, selector: string, selectorToWaitFor?: string): Promise<string | undefined> {
-        if (selectorToWaitFor) {
-            page.waitForSelector(selectorToWaitFor);
-        }
-        const elementHandle = await page.$(selector);
-        if (elementHandle) {
-            const text = await page.evaluate(el => el.textContent, elementHandle);
-            return text ? text.trim() : "N/A";
-        }
-    }
-
     async scrape(url: URL, page: Page) {
         //TODO await this.login(page);
         // '.price-box__price' '.AlzaText'
@@ -70,9 +60,9 @@ class AlzaPriceScraper {
         await page.goto(url);
 
         scrapedInfo.hostname = url.hostname;
-        scrapedInfo.title = await this.getElementData(page, '#h1c',  '.price-box__price-text');
-        scrapedInfo.price = await this.getElementData(page, '.price-box__price');
-        scrapedInfo.stockInfo = await this.getElementData(page, '.AlzaText', '.AlzaText');
+        scrapedInfo.title = await getElementData(page, '#h1c',  '.price-box__price-text');
+        scrapedInfo.price = await getElementData(page, '.price-box__price');
+        scrapedInfo.stockInfo = await getElementData(page, '.AlzaText', '.AlzaText');
 
         return scrapedInfo;
     }

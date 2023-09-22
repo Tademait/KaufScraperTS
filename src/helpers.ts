@@ -1,3 +1,5 @@
+import { Page } from "puppeteer";
+
 type FunctionToWrap = (...args: any[]) => any
 
 export function logWrapper(originalFunc: FunctionToWrap) {
@@ -18,4 +20,15 @@ export function formatDate(date: Date) {
   const seconds = String(date.getSeconds()).padStart(2, '0');
 
   return `${year}/${month}/${day} | ${hours}:${minutes}:${seconds}`;
+}
+
+export async function getElementData(page: Page, selector: string, selectorToWaitFor?: string): Promise<string | undefined> {
+  if (selectorToWaitFor) {
+      page.waitForSelector(selectorToWaitFor);
+  }
+  const elementHandle = await page.$(selector);
+  if (elementHandle) {
+      const text = await page.evaluate(el => el.textContent, elementHandle);
+      return text ? text.trim() : "N/A";
+  }
 }
