@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { supportedHosts } from './config';
 import sendWebhook from './webhookSender';
+import { ScrapedDataObject } from './types';
 
 class ScraperManager {
     loadedModules: any //TODO create a scraperObj / module TS type
@@ -18,17 +19,15 @@ class ScraperManager {
                 console.log(`Host ${url.host} is not supported`);
                 continue;
             }
-            const scrapedInfoObject = await scraper.scrape(url, page);
+            const scrapedInfoObject: ScrapedDataObject = await scraper.scrape(url, page);
             console.log(scrapedInfoObject);
-            const status = sendWebhook(
-                {
-                title: scrapedInfoObject.title,
-                url: url.href,
-                description: scrapedInfoObject.description,
-                footer: {text: scrapedInfoObject.stock, icon_url: ""},
-                }
-            );
-            console.log(status);
+            // const status = sendWebhook(
+            //     {
+            //     title: scrapedInfoObject.title,
+            //     url: url.href,
+            //     footer: {text: scrapedInfoObject.stockInfo, icon_url: ""},
+            //     }
+            // );
         }
         browser.close();
     }

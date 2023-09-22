@@ -1,4 +1,5 @@
 import { Page } from "puppeteer";
+import { ScrapedDataObject } from "../types";
 
 class AlzaPriceScraper {
     constructor() {
@@ -41,32 +42,47 @@ class AlzaPriceScraper {
         await page.screenshot({path: 'iframe.png'});
     }
 
+    getElementInfo(page: Page, selector: string, selectorToWaitFor?: string): string | undefined {
+        if (selectorToWaitFor) {
+            page.waitForSelector(selectorToWaitFor);
+            console.log("Waiting for selector");
+        }
+        const selectedElement = document.querySelector(selector);
+        // @ts-ignore
+        console.log("################");
+        console.log(selectedElement);
+        return selectedElement ? selectedElement.innerText : null;
+    }
+
     async scrape(url: URL, page: Page) {
         //TODO await this.login(page);
         //@ts-ignore - apparently pupetteer can parse the URL afterall
         await page.goto(url);
-        await page.waitForSelector('.price-box__price-text');
 
-        const title = await page.evaluate(() => {
+        await page.exposeFunction("getElementInfo", this.getElementInfo);
+
+        const scrapedObject: ScrapedDataObject = await page.evaluate(() => {
+            // WARNING: You can't console log here, since the logs wont get propagated
+            // outside of the headless browser!
             // @ts-ignore
-            const priceElement = document.querySelector('#h1c');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'item name not available';
+            const scrapedInfo: ScrapedDataObject = {
+                title: '',
+                price: '',
+                stockInfo: '',
+                isOnSale: false,
+                productPicUrl: '',
+                hostname: '',
+                hostFavicon: '',
+              };
+            scrapedInfo.title = this.getElementInfo(page, "#h1c", '.price-box__price-text');
+            console.log(scrapedInfo.title);
+            scrapedInfo.price = this.getElementInfo(page, '.price-box__price');
+            scrapedInfo.stockInfo = this.getElementInfo(page, '.AlzaText', '.AlzaText'); // TODO
+            //scrapedInfo.hostname = url.hostname;
         });
-        const price = await page.evaluate(() => {
-            // @ts-ignore
-            const priceElement = document.querySelector('.price-box__price');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'rice not available';
-        });
-        await page.waitForSelector('.AlzaText');
-        const stock = await page.evaluate(() => {
-            // @ts-ignore
-            const priceElement = document.querySelector('.AlzaText');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'stock info not available';
-        });
-        return {title, price, stock};
+        console.log("tusujá");
+        console.log(scrapedObject);
+        return scrapedObject;
     }
 }
 
