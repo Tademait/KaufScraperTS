@@ -1,8 +1,8 @@
-import axios from 'axios';
+import axios, { AxiosResponse } from 'axios';
 import dotenv from 'dotenv';
 dotenv.config();
 
-function sendWebhook({
+async function sendWebhook({
     title="",
     url="",
     description="",
@@ -12,7 +12,7 @@ function sendWebhook({
     image={url: ""},
     footer={text: "", icon_url: ""}
 }={}
-){
+): Promise<AxiosResponse<any, any>>{
 const embed = {
     title: title,
     url: url,
@@ -27,13 +27,15 @@ const embed = {
   if (!webhook_url) {
     throw "Webhook URL missing. Add it into the .env file";
   }
-  return axios.post(webhook_url, { embeds: [embed] })
-  .then(response => {
-    console.log('Webhook sent:', response.status, response.data);
-  })
-  .catch(error => {
-      console.error('Error sending webhook:', error);
-  });
-};  
+  try {
+  const response = await axios.post(webhook_url, { embeds: [embed] });
+  console.log('Webhook sent with return code:', response.status);
+  return response;
+  
+  } catch (error) {
+  console.error('Error:', error);
+  throw error;
+}
+};
 
 export default sendWebhook;
