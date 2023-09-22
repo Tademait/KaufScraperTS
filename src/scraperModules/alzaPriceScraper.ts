@@ -1,4 +1,5 @@
 import { Page } from "puppeteer";
+import { ScrapedDataObject } from "../types";
 
 class AlzaPriceScraper {
     constructor() {
@@ -21,9 +22,9 @@ class AlzaPriceScraper {
         await page.waitForTimeout(5000);
 
         const frames = page.frames();
-        console.log(frames);
+        //console.log(frames);
         const frame = frames.find(frame => frame.name() === 'loginIframe');
-        console.log(frame);
+        //console.log(frame);
         if (!frame) {
             //throw new Error('Cannot find login iframe');
             console.error("Cannot find login frame, continuing without logging in");
@@ -41,32 +42,39 @@ class AlzaPriceScraper {
         await page.screenshot({path: 'iframe.png'});
     }
 
+    async getElementData(page: Page, selector: string, selectorToWaitFor?: string): Promise<string | undefined> {
+        if (selectorToWaitFor) {
+            page.waitForSelector(selectorToWaitFor);
+        }
+        const elementHandle = await page.$(selector);
+        if (elementHandle) {
+            const text = await page.evaluate(el => el.textContent, elementHandle);
+            return text ? text.trim() : "N/A";
+        }
+    }
+
     async scrape(url: URL, page: Page) {
         //TODO await this.login(page);
+        // '.price-box__price' '.AlzaText'
+        const scrapedInfo: ScrapedDataObject = {
+            title: '',
+            price: '',
+            stockInfo: '',
+            isOnSale: false,
+            productPicUrl: '',
+            hostname: '',
+            hostFavicon: '',
+          };
+
         //@ts-ignore - apparently pupetteer can parse the URL afterall
         await page.goto(url);
-        await page.waitForSelector('.price-box__price-text');
 
-        const title = await page.evaluate(() => {
-            // @ts-ignore
-            const priceElement = document.querySelector('#h1c');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'item name not available';
-        });
-        const price = await page.evaluate(() => {
-            // @ts-ignore
-            const priceElement = document.querySelector('.price-box__price');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'rice not available';
-        });
-        await page.waitForSelector('.AlzaText');
-        const stock = await page.evaluate(() => {
-            // @ts-ignore
-            const priceElement = document.querySelector('.AlzaText');
-            // @ts-ignore
-            return priceElement ? priceElement.innerText : 'stock info not available';
-        });
-        return {title, price, stock};
+        scrapedInfo.hostname = url.hostname;
+        scrapedInfo.title = await this.getElementData(page, '#h1c',  '.price-box__price-text');
+        scrapedInfo.price = await this.getElementData(page, '.price-box__price');
+        scrapedInfo.stockInfo = await this.getElementData(page, '.AlzaText', '.AlzaText');
+
+        return scrapedInfo;
     }
 }
 

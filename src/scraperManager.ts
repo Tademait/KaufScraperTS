@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { supportedHosts } from './config';
 import sendWebhook from './webhookSender';
+import { ScrapedDataObject } from './types';
 
 class ScraperManager {
     loadedModules: any //TODO create a scraperObj / module TS type
@@ -12,30 +13,28 @@ class ScraperManager {
         const browser = await puppeteer.launch({ "headless": "new"});
         for (const url of urlList) {
             const page = await browser.newPage();
-            console.log(url.host);
+            console.log(`Currently scraping: ${url.host}...`);
             const scraper = this.selectScraperModule(url.host);
             if (!scraper) {
-                console.log(`Host ${url.host} is not supported`);
+                console.error(`Host ${url.host} is not supported`);
                 continue;
             }
-            const scrapedInfoObject = await scraper.scrape(url, page);
+            const scrapedInfoObject: ScrapedDataObject = await scraper.scrape(url, page);
             console.log(scrapedInfoObject);
-            const status = sendWebhook(
+            const response = await sendWebhook(
                 {
                 title: scrapedInfoObject.title,
                 url: url.href,
-                description: scrapedInfoObject.description,
-                footer: {text: scrapedInfoObject.stock, icon_url: ""},
+                description: scrapedInfoObject.stockInfo,
+                footer: {text: scrapedInfoObject.hostname, icon_url: "https://www.google.com/favicon.ico"},
                 }
             );
-            console.log(status);
         }
         browser.close();
     }
 
     selectScraperModule(hostname: string) {
         if (!(hostname in supportedHosts)){
-            console.log("Website not supported.");
             return null;
         }
         if (!this.loadedModules[hostname]){
