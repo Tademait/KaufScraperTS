@@ -1,6 +1,6 @@
 import { Page } from "puppeteer";
 import { ScrapedDataObject } from "../types";
-import { getElementData } from "../helpers";
+import { getElementSrc, getElementText } from "../helpers";
 
 class AlzaPriceScraper {
     constructor() {
@@ -45,25 +45,27 @@ class AlzaPriceScraper {
 
     async scrape(url: URL, page: Page) {
         //TODO await this.login(page);
-        // '.price-box__price' '.AlzaText'
         const scrapedInfo: ScrapedDataObject = {
+            productUrl: '',
             title: '',
             price: '',
             stockInfo: '',
             isOnSale: false,
             productPicUrl: '',
             hostname: '',
-            hostFavicon: '',
+            hostFavicon: 'https://play-lh.googleusercontent.com/K11f9QMY2BNt8bpsxyXLiw0ugzBvabvAQlujNxZribAYCs0MWfC4Lx6788ggTWCRQzU=w240-h480', // Alza favicon
           };
 
-        //@ts-ignore - apparently pupetteer can parse the URL afterall
+        //@ts-ignore - apparently puppeteer can parse the URL afterall
         await page.goto(url);
 
+        scrapedInfo.productUrl = url.href;
         scrapedInfo.hostname = url.hostname;
-        scrapedInfo.title = await getElementData(page, '#h1c',  '.price-box__price-text');
-        scrapedInfo.price = await getElementData(page, '.price-box__price');
-        scrapedInfo.stockInfo = await getElementData(page, '.AlzaText', '.AlzaText');
-
+        scrapedInfo.title = await getElementText(page, '#h1c',  '.price-box__price-text');
+        scrapedInfo.price = await getElementText(page, '.price-box__price');
+        scrapedInfo.stockInfo = await getElementText(page, '.AlzaText', '.AlzaText');
+        scrapedInfo.productPicUrl = await getElementSrc(page, '.detailGallery-alz-6', '.detailGallery-alz-6');
+        
         return scrapedInfo;
     }
 }
