@@ -52,3 +52,8 @@ export async function getElementSrc(
     return src ? src.trim() : undefined;
   }
 }
+
+export function formatPrice(price: string): number {
+  const numericString = price.replace(/[^\d.-]/g, ""); // Removes non-numeric characters
+  return parseInt(numericString);
+}

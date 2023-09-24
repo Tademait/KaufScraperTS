@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "app": "npx tsc; node dist/main.js"
+    "app": "tsc & node dist/main.js"
   },
   "keywords": [],
   "author": "",
@@ -16,6 +16,7 @@
   "dependencies": {
     "axios": "^1.5.0",
     "dotenv": "^16.3.1",
-    "puppeteer": "^21.2.1"
+    "puppeteer": "^21.2.1",
+    "sqlite3": "^5.1.6"
   }
 }
